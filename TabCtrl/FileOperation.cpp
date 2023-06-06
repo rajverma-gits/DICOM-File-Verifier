@@ -486,7 +486,9 @@ bool CFileOperation::modalityCheck(CString sSourceFile)
 	if (GetValue1(fileID, MC_ATT_MODALITY, mod, sizeof(mod), "") == QR_FAILURE)
 		return false;
 	CString m1(mod);
-	if (m1 == "MR")
+	if (m1 == "MR" && mrm == true)
+		return true;
+	else if (m1 == "CT" && ctm == true)
 		return true;
 	else
 		return false;
@@ -522,6 +524,11 @@ void CFileOperation::DoFileCopy(CString sSourceFile, CString sDestFile)
 		if (sExt == L".dcm" || sExt == L".ima"  && txt == true)
 			if (!CopyFile(sSourceFile, sDestFile, bOvrwriteFails)) throw new CFExeption(GetLastError());
 		if (sExt == L".dcm" || sExt == L".ima"&& mrm == true)
+		{
+			if (CFileOperation::modalityCheck(sSourceFile))
+				if (!CopyFile(sSourceFile, sDestFile, bOvrwriteFails)) throw new CFExeption(GetLastError());
+		}
+		if (sExt == L".dcm" || sExt == L".ima"&& ctm == true)
 		{
 			if (CFileOperation::modalityCheck(sSourceFile))
 				if (!CopyFile(sSourceFile, sDestFile, bOvrwriteFails)) throw new CFExeption(GetLastError());

@@ -374,11 +374,7 @@ void CTabTwo::OnBnClickedButton2()
 	}
 
 	
-	CFileOperation fo;
-	int MyAppID;
-	if (fo.initialised == true)
-		MyAppID = fo.MyAppID;
-	else
+	if (!initialised)
 	{
 		amergeStatus = MC_Register_Application(&MyAppID, "MergeComApp");
 		if (amergeStatus != MC_NORMAL_COMPLETION
@@ -387,6 +383,7 @@ void CTabTwo::OnBnClickedButton2()
 			printf("\t%s\n", MC_Error_Message(amergeStatus));
 			return;
 		}
+		initialised == true;
 	}
 
 	CBinfo callbackInfo = { 0 };
