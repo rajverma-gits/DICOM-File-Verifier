@@ -108,8 +108,8 @@ void CTabTwo::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CTabTwo, CDialog)
 	ON_WM_DROPFILES()
 	ON_BN_CLICKED(IDC_BUTTON1, &CTabTwo::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &CTabTwo::OnBnClickedButton2)
 	ON_EN_CHANGE(IDC_MFCEDITBROWSE1, &CTabTwo::OnEnChangeMfceditbrowse1)
+	ON_LBN_SELCHANGE(IDC_LIST1, &CTabTwo::OnLbnSelchangeList1)
 END_MESSAGE_MAP()
 
 
@@ -135,6 +135,8 @@ typedef struct study_node
 	char     pat_name[UI_LENGTH + 1];
 	char     pat_bday[DA_LENGTH + 1];
 	char     pat_sex[AE_LENGTH + 1];
+	char     pat_wht[AE_LENGTH + 1];
+	char     mod[UI_LENGTH + 1];
 
 	char     stu_inst[UI_LENGTH + 1];
 	char     stu_date[DA_LENGTH + 1];
@@ -290,7 +292,7 @@ void ListFilesInFolder(const CString &folderPath, vector<wstring> &fileNames)
 
 }
 
-bool isFileFormat(const wstring &fileName, const wstring &desiredFormat)
+bool isFileFormat(const wstring &fileName, const wstring &desiredFormat1, const wstring &desiredFormat2)
 {
 	size_t dotPos = fileName.find_last_of(L".");
 	if (dotPos != wstring::npos)
@@ -300,7 +302,7 @@ bool isFileFormat(const wstring &fileName, const wstring &desiredFormat)
 		locale loc;
 		for (wchar_t c : extension)
 			lowerCaseExtension += tolower(c, loc);
-		return lowerCaseExtension == desiredFormat;
+		return lowerCaseExtension == desiredFormat1 || lowerCaseExtension == desiredFormat2;
 	}
 	return false;
 }
@@ -308,14 +310,16 @@ bool isFileFormat(const wstring &fileName, const wstring &desiredFormat)
 void CTabTwo::OnBnClickedButton1()
 {
 	UpdateData();
-	
+	m_control.ResetContent();
 	//MessageBox(L"You selected " + m_dicom);
 	vector<wstring> fileNames;
 	ListFilesInFolder(m_dicom, fileNames);
-	wstring desiredFormat = L"dcm";
+	wstring desiredFormat1 = L"dcm";
+	wstring desiredFormat2 = L"ima";
+
 	for (const auto&fileName : fileNames)
 	{
-		if (isFileFormat(fileName, desiredFormat))
+		if (isFileFormat(fileName, desiredFormat1, desiredFormat2))
 		{
 			CString result(fileName.c_str());
 			m_control.AddString(result);
@@ -324,22 +328,55 @@ void CTabTwo::OnBnClickedButton1()
 	// TODO: Add your control notification handler code here
 }
 
-void CTabTwo::OnBnClickedButton2()
+
+void CTabTwo::OnEnChangeMfceditbrowse1()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialog::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+bool ContainsSpecialCharacters(const char* charArray)
+{
+	const char* specialChars = "!@#$%^&*()+{}[]<>,.?/\\|~`";
+
+	for (int i = 0; charArray[i] != '\0'; i++)
+	{
+		if (strchr(specialChars, charArray[i]) != nullptr)
+		{
+			return true;  
+		}
+	}
+
+	return false; 
+}
+
+
+void CTabTwo::OnLbnSelchangeList1()
 {
 	// TODO: Add your control notification handler code here
-	// ADD m_dicom + seltext
-	//m_Lcontrol2.ResetContent();
-
 	CListBox* lbox = (CListBox*)GetDlgItem(IDC_LIST1);
 	if (lbox == NULL)
 	{
 		MessageBox(L"Please select ");
 	}
 	int curser = lbox->GetCurSel();
-	CString seltext; 
+	CString seltext;
 	lbox->GetText(curser, seltext);
 	CString finalFilePath = m_dicom + L"\\" + seltext;
+	/*CString theData;
+	UINT uiSelection = m_control.GetCurSel();
 
+	if (uiSelection == LB_ERR) return;
+
+
+	m_control.GetText(uiSelection, theData);*/
+	//MessageBox(finalFilePath);
+	UpdateData();
+	m_Lcontrol2.ResetContent();
 	MC_STATUS amergeStatus;
 	CString a_csMergeFilePath = _T("C:\\Users\\z004r45v\\Documents\\RajVerma_Repository\\mc3_w32_5160_008-91204\\mc3apps\\merge.ini");
 
@@ -373,17 +410,15 @@ void CTabTwo::OnBnClickedButton2()
 		return;
 	}
 
-	
-	if (!initialised)
+	if (theApp.initialised == false)
 	{
-		amergeStatus = MC_Register_Application(&MyAppID, "MergeComApp");
-		if (amergeStatus != MC_NORMAL_COMPLETION
-			&& amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
+		amergeStatus = MC_Register_Application(&theApp.MyAppID, "MergeComApp");
+		if (amergeStatus != MC_NORMAL_COMPLETION && amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
 		{
 			printf("\t%s\n", MC_Error_Message(amergeStatus));
 			return;
 		}
-		initialised == true;
+		theApp.initialised = true;
 	}
 
 	CBinfo callbackInfo = { 0 };
@@ -391,7 +426,7 @@ void CTabTwo::OnBnClickedButton2()
 	int fileID;
 	CStringA myStringA(finalFilePath);
 	amergeStatus = MC_Create_File(&fileID, myStringA, "STANDARD_MR", C_STORE_RQ);
-	if (amergeStatus != MC_NORMAL_COMPLETION)
+	if (amergeStatus != MC_NORMAL_COMPLETION && amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
 	{
 		printf("Unable to create file object", amergeStatus);
 		printf("\t%s\n", MC_Error_Message(amergeStatus));
@@ -399,9 +434,9 @@ void CTabTwo::OnBnClickedButton2()
 		//exit(EXIT_FAILURE);
 	}
 
-
-	amergeStatus = MC_Open_File(MyAppID, fileID, &callbackInfo, MediaToFileObj);
-	if (amergeStatus != MC_NORMAL_COMPLETION)
+	 
+	amergeStatus = MC_Open_File(theApp.MyAppID, fileID, &callbackInfo, MediaToFileObj);
+	if (amergeStatus != MC_NORMAL_COMPLETION && amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
 	{
 		printf("Unable to read file from media", amergeStatus);
 		printf("\t%s\n", MC_Error_Message(amergeStatus));
@@ -409,11 +444,26 @@ void CTabTwo::OnBnClickedButton2()
 	}
 
 	StudyNode study;
-	CString pid = L"", pname = L"", pbday = L"", psex = L"";
+
+	bool empty = false;
+	bool invalid = false;
+	CString empMsg = L"Empty Tags : ";
+	CString inMsg = L"\nInvalid Tags : ";
+	CString pid = L"", pname = L"", pbday = L"", psex = L"", modality = L"";
 	if (GetValue(fileID, MC_ATT_PATIENT_ID, study.pat_id, sizeof(study.pat_id), "") == QR_FAILURE)
 		return;
 	else
 	{
+		if (strlen(study.pat_id) == 0)
+		{
+			empty = true;
+			empMsg += "PATIENT ID ";
+		}
+		if (ContainsSpecialCharacters(study.pat_id))
+		{
+			invalid = true;
+			inMsg += " PATIENT ID ";
+		}
 		pid = L"Patient ID: ";
 		pid += study.pat_id;
 	}
@@ -421,13 +471,29 @@ void CTabTwo::OnBnClickedButton2()
 		return;
 	else
 	{
+		if (strlen(study.pat_name) == 0)
+		{
+			empty = true;
+			empMsg += " PATIENT NAME ";
+		}
+		if (ContainsSpecialCharacters(study.pat_name))
+		{
+			invalid = true;
+			inMsg += " PATIENT NAME ";
+		}
 		pname = L"Patient Name: ";
 		pname += study.pat_name;
 	}
+
 	if (GetValue(fileID, MC_ATT_PATIENTS_BIRTH_DATE, study.pat_bday, sizeof(study.pat_bday), "") == QR_FAILURE)
 		return;
 	else
 	{
+		if (strlen(study.pat_bday) == 0)
+		{
+			empty = true;
+			empMsg += " PATIENT BIRTHDAY ";
+		}
 		CString x(study.pat_bday);
 		changeDate(x);
 		pbday = L"Patient Birthday: ";
@@ -437,25 +503,41 @@ void CTabTwo::OnBnClickedButton2()
 		return;
 	else
 	{
+		if (strlen(study.pat_sex) == 0)
+		{
+			empty = true;
+			empMsg += " PATIENT SEX ";
+		}
 		psex = L"Patient Sex: ";
 		psex += study.pat_sex;
 	}
+	if (GetValue(fileID, MC_ATT_MODALITY, study.mod, sizeof(study.mod), "") == QR_FAILURE)
+		return;
+	else
+	{
+		if (strlen(study.mod) == 0)
+		{
+			empty = true;
+			empMsg += " MODALITY ";
+		}
+		modality = L"Modlaity: ";
+		modality += study.mod;
+	}
 
+	if (empty == true && invalid == true)
+	{
+		//CString tags = L"\ntags are empty";
+		CString pMsg = empMsg + inMsg;
+		MessageBox(pMsg);
+	}
+	else if (empty == true)
+		MessageBox(empMsg);
+	else if (invalid == true)
+		MessageBox(inMsg);
+
+	m_Lcontrol2.AddString(modality);
 	m_Lcontrol2.AddString(pid);
 	m_Lcontrol2.AddString(pname);
 	m_Lcontrol2.AddString(pbday);
 	m_Lcontrol2.AddString(psex);
-
-	//MessageBox(L"You selected " + finalOutput);
-}
-
-
-void CTabTwo::OnEnChangeMfceditbrowse1()
-{
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialog::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 }

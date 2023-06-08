@@ -23,9 +23,14 @@ public:
 // Overrides
 public:
 	virtual BOOL InitInstance();
+	bool initialised = false;
+	int MyAppID;
+	//static int MyAPPID;
+	//static void initialiseMerge();
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
 };
 
+//int CTabCtrlApp::MyAPPID = 0;
 extern CTabCtrlApp theApp;

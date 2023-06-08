@@ -30,9 +30,7 @@ public:
 	CString m_dicom;
 	CListBox  m_control;
 	CString m_ListTextCtrl;
-	afx_msg void OnBnClickedButton2();
 	CListBox m_Lcontrol2;
 	afx_msg void OnEnChangeMfceditbrowse1();
-	bool initialised = false;
-	int MyAppID;
+	afx_msg void OnLbnSelchangeList1();
 };

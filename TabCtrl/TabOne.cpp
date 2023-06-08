@@ -24,7 +24,6 @@ CTabOne::CTabOne(CWnd* pParent /*=NULL*/)
 	, m_ctm(FALSE)
 	, m_mrm(FALSE)
 {
-
 }
 
 

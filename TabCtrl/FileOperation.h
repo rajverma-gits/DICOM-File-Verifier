@@ -51,8 +51,6 @@ public:
 	int CheckPath(CString sPath);
 	bool IsAborted() { return m_bAborted; }
 	bool modalityCheck(CString sPath);
-	bool initialised = false;
-	int MyAppID;
 
 protected:
 	void DoCopy(CString sSource, CString sDest);

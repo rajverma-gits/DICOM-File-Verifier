@@ -34,7 +34,7 @@
 #include <vector>
 #include <locale>
 #include <minwinbase.h>
-#include "TabCtrlDlg.h"
+#include "TabCtrl.h"
 
 #include <time.h>
 #ifdef _WIN32
@@ -302,7 +302,7 @@ void CFileOperation::CheckAndCopy(CString sSourceFolder, CString sDestFolder)
 {
 	if (FolderExists(sDestFolder) == true)
 	{
-		const int result = MessageBox(NULL, L"Folder already exist. Do you still want to copy with same name?", L"WARNING !!", MB_YESNOCANCEL);
+		const int result = MessageBox(NULL, L"Folder already exist. Do you still want to copy in same folder?", L"WARNING !!", MB_YESNOCANCEL);
 
 		switch (result)
 		{
@@ -449,16 +449,15 @@ bool CFileOperation::modalityCheck(CString sSourceFile)
 		return false;
 	}
 
-	if (initialised == false)
+	if (theApp.initialised == false)
 	{
-		amergeStatus = MC_Register_Application(&MyAppID, "MergeComApp");
-		if (amergeStatus != MC_NORMAL_COMPLETION
-			&& amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
+		amergeStatus = MC_Register_Application(&theApp.MyAppID, "MergeComApp");
+		if (amergeStatus != MC_NORMAL_COMPLETION && amergeStatus != MC_LIBRARY_ALREADY_INITIALIZED)
 		{
 			printf("\t%s\n", MC_Error_Message(amergeStatus));
 			return false;
 		}
-		initialised = true;
+		theApp.initialised= true;
 	}
 
 	CBinfo callbackInfo = { 0 };
@@ -474,7 +473,7 @@ bool CFileOperation::modalityCheck(CString sSourceFile)
 		//exit(EXIT_FAILURE);
 	}
 
-	amergeStatus = MC_Open_File(MyAppID, fileID, &callbackInfo, MediaToFileObj1);
+	amergeStatus = MC_Open_File(theApp.MyAppID, fileID, &callbackInfo, MediaToFileObj1);
 	if (amergeStatus != MC_NORMAL_COMPLETION)
 	{
 		printf("Unable to read file from media", amergeStatus);

@@ -55,5 +55,5 @@ END_MESSAGE_MAP()
 
 void CAboutAppDialog::OnLinkClicked()
 {
-	ShellExecute(NULL, _T("open"), _T("https://www.google.com/"), NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, _T("open"), _T("https://github.com/rajverma-gits/DICOM-File-Verifier"), NULL, NULL, SW_SHOWNORMAL);
 }
